@@ -14,7 +14,7 @@ const template_path = path.join(__dirname, "../templates/views");
 const partials_path = path.join(__dirname, "../templates/partials");
 
 app.use(express.json());
-app.use(express.urlencoded({extended:false}));
+app.use(express.urlencoded({ extended: false }));
 
 app.use(express.static(static_path));
 app.set("view engine", "hbs");
@@ -37,16 +37,33 @@ app.post("/signup", async (req, res) => {
             password: req.body.password
         })
 
-       const regUser =  await newUser.save();
+        const regUser = await newUser.save();
         res.status(201).render("index");
 
     } catch (error) {
         res.status(400).send(error);
     }
-} );
+});
 
 app.get("/login", (req, res) => {
     res.render("login");
+});
+
+app.post("/login", async (req, res) => {
+    try {
+        const user = req.body.username;
+        const pass = req.body.password;
+
+        const user1 = await Users.findOne({ username: user });
+
+        if (user1.password === pass) {
+            res.status(201).render("index");
+        } else {
+            res.send("Invalid Login");
+        }
+    } catch (error) {
+        res.status(400).send("Invalid Login 5");
+    }
 });
 
 app.listen(port, () => {
