@@ -4,6 +4,7 @@
 
 # I specify
 node_modules/
+*.env
 
 # Visual Studio files
 *.[Oo]bj
