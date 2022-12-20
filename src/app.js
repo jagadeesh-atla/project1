@@ -2,6 +2,8 @@ const express = require("express");
 const path = require("path");
 const app = express();
 const hbs = require("hbs");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 require("./db/conn");
 const Users = require("./models/users");
@@ -36,10 +38,11 @@ app.post("/signup", async (req, res) => {
             email: req.body.email,
             password: req.body.password
         })
+        
+        const token = await newUser.generateAuthToken();
 
         const regUser = await newUser.save();
         res.status(201).render("index");
-
     } catch (error) {
         res.status(400).send(error);
     }
@@ -55,8 +58,11 @@ app.post("/login", async (req, res) => {
         const pass = req.body.password;
 
         const user1 = await Users.findOne({ username: user });
+        const isMatch = await bcrypt.compare(pass, user1.password);
 
-        if (user1.password === pass) {
+        const token = await user1.generateAuthToken();
+
+        if (isMatch) {
             res.status(201).render("index");
         } else {
             res.send("Invalid Login");
