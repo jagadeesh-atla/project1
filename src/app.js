@@ -5,6 +5,8 @@ const app = express();
 const hbs = require("hbs");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+const auth = require("./middleware/auth");
 
 require("./db/conn");
 const Users = require("./models/users");
@@ -17,6 +19,7 @@ const template_path = path.join(__dirname, "../templates/views");
 const partials_path = path.join(__dirname, "../templates/partials");
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 
 app.use(express.static(static_path));
@@ -27,6 +30,10 @@ hbs.registerPartials(partials_path);
 app.get("/", (req, res) => {
     res.render("index");
 });
+
+app.get("/secret", auth, (req, res) => {
+    res.render("secret");
+})
 
 app.get("/signup", (req, res) => {
     res.render("signup");
@@ -39,8 +46,14 @@ app.post("/signup", async (req, res) => {
             email: req.body.email,
             password: req.body.password
         })
-        
+
         const token = await newUser.generateAuthToken();
+
+        res.cookie("jwt", token, {
+            expires: new Date(Date.now() + 60000),
+            httpOnly: true,
+            // secure:true
+        });
 
         const regUser = await newUser.save();
         res.status(201).render("index");
@@ -62,6 +75,14 @@ app.post("/login", async (req, res) => {
         const isMatch = await bcrypt.compare(pass, user1.password);
 
         const token = await user1.generateAuthToken();
+
+        res.cookie("jwt", token, {
+            expires: new Date(Date.now() + 60000),
+            httpOnly: true,
+            // secure:true
+        });
+
+        const cookieParsered = await req.cookies.jwt;
 
         if (isMatch) {
             res.status(201).render("index");
