@@ -33,7 +33,21 @@ app.get("/", (req, res) => {
 
 app.get("/secret", auth, (req, res) => {
     res.render("secret");
-})
+});
+
+app.get("/logout", auth, async (req, res) => {
+    try {
+        req.user.tokens = req.user.tokens.filter((currElement) => {
+            return currElement.token != req.token;
+        })
+        res.clearCookie("jwt");
+
+        await req.user.save();
+        res.render("login");
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
 
 app.get("/signup", (req, res) => {
     res.render("signup");
